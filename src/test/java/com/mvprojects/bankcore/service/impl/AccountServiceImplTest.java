@@ -1,5 +1,6 @@
 package com.mvprojects.bankcore.service.impl;
 
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.mvprojects.bankcore.dto.AccountDto;
 import com.mvprojects.bankcore.entity.Account;
 import com.mvprojects.bankcore.mapper.AccountMapper;
@@ -36,8 +37,8 @@ class AccountServiceImplTest {
     }
 
     @Test
-    @DisplayName("create Account unit test")
-    void createAccount(){
+    @DisplayName("createAccount Success")
+    void givenNonExistingAccount_whenCreateAccount_thenAccountShouldBeReturned(){
         // Arrange
         Account account = AccountMapper.mapToAccount(accountDTO);
         given(accountRepository.save(any(Account.class))).willReturn(account);
@@ -46,5 +47,36 @@ class AccountServiceImplTest {
         // Assert
         assertNotNull(createdObject);
         assertEquals(accountDTO.getBalance(), createdObject.getBalance());
+    }
+
+    @Test
+    @DisplayName("GetAccountById should Succeed")
+    void testGetAccountById_ExistingAccount() {
+        // Given
+        Long accountId = 1L;
+        Account account = new Account();
+        account.setId(accountId);
+        given(accountRepository.findById(accountId)).willReturn(Optional.of(account));
+
+        // When
+        Optional<AccountDto> resultOptional = accountService.getAccountById(accountId);
+
+        // Then
+        assertTrue(resultOptional.isPresent());
+        AccountDto result = resultOptional.get();
+        assertNotNull(result);
+        assertEquals(accountId, result.getId());
+    }
+
+    @Test
+    @DisplayName("GetAccountById should Fail")
+    void testGetAccountById_NonExistingAccount() {
+        // Given
+        Long nonExistingId = 999L;
+        given(accountRepository.findById(nonExistingId)).willReturn(Optional.empty());
+        // Act
+        Optional<AccountDto> resultOptional = accountService.getAccountById(nonExistingId);
+        // Then
+        assertTrue(resultOptional.isEmpty());
     }
 }

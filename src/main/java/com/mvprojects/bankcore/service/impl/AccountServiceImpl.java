@@ -7,6 +7,9 @@ import com.mvprojects.bankcore.repository.AccountRepository;
 import com.mvprojects.bankcore.service.AccountService;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Optional;
+
 @Service
 public class AccountServiceImpl implements AccountService {
     private AccountRepository accountRepository;
@@ -19,5 +22,11 @@ public class AccountServiceImpl implements AccountService {
         accountRepository.save(account);
         return AccountMapper.maptoAccountDto(account);
         
+    }
+
+    @Override
+    public Optional<AccountDto> getAccountById(Long id) {
+        return accountRepository.findById(id)
+                .map(AccountMapper::maptoAccountDto);
     }
 }
