@@ -13,26 +13,24 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AccountControllerTest {
     @Mock
     private AccountServiceImpl accountService;
-
     @InjectMocks
     private AccountController accountController;
-
     private AccountDto mockAccountDto;
-
     @BeforeEach
     void setUp() {
         mockAccountDto  = new AccountDto(1L, "1234567890", BigDecimal.valueOf(1000.0));
     }
-
 
     @Test
     @DisplayName("AddAccount Success")
@@ -56,7 +54,7 @@ class AccountControllerTest {
         // Given
         Long accountId = 1L;
         when(accountService.getAccountById(accountId)).thenReturn(Optional.of(mockAccountDto));
-        // When
+        // Act
         ResponseEntity<AccountDto> response = accountController.getAccountById(accountId);
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -72,6 +70,37 @@ class AccountControllerTest {
         // When
         ResponseEntity<AccountDto> response = accountController.getAccountById(nonExistingId);
         // Then
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+
+    @Test
+    @DisplayName("Deposit should Succeed")
+    void givenValidAccountIdAndDepositAmount_whenDeposit_thenUpdatedAccountDtoReturned() {
+        // Arrange
+        Long accountId = mockAccountDto.getId();
+        BigDecimal depositAmount = BigDecimal.valueOf(500.0);
+        BigDecimal expectedBalance = mockAccountDto.getBalance().add(depositAmount);
+        given(accountService.deposit(accountId, depositAmount)).willReturn(new AccountDto(accountId,mockAccountDto.getHolderAccount(),expectedBalance));
+        // Act
+        ResponseEntity<AccountDto> response = accountController.deposit(accountId, depositAmount);
+        // Assert
+        AccountDto updatedAccountDto = response.getBody();
+        assertNotNull(response);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(updatedAccountDto.getBalance(), expectedBalance );
+    }
+
+    @Test
+    @DisplayName("Deposit should Fail")
+    void givenNonExistingAccountIdAndDepositAmount_whenDeposit_thenNotFoundStatusReturned() {
+        // Arrange
+        Long nonExistingId = 999L;
+        BigDecimal depositAmount = BigDecimal.valueOf(500.0);
+        given(accountService.deposit(nonExistingId, depositAmount)).willThrow(NoSuchElementException.class);
+        // Act
+        ResponseEntity<AccountDto> response = accountController.deposit(nonExistingId, depositAmount);
+        // Assert
+        assertNotNull(response);
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
 }

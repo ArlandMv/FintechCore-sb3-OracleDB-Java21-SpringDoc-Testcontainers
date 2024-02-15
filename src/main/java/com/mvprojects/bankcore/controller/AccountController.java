@@ -7,12 +7,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/accounts")
 public class AccountController {
-    private AccountService accountService;
+    private final AccountService accountService;
     public AccountController(AccountService accountService) {
         this.accountService = accountService;
     }
@@ -31,6 +34,17 @@ public class AccountController {
             return ResponseEntity.ok(accountDto.get());
         }
         else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    // Update Account REST API
+    @PostMapping("/{id}/deposit")
+    public ResponseEntity<AccountDto> deposit(@PathVariable Long id, @RequestBody BigDecimal amount) {
+        try {
+            AccountDto updatedAccount = accountService.deposit(id, amount);
+            return ResponseEntity.ok(updatedAccount);
+        } catch (NoSuchElementException e) {
             return ResponseEntity.notFound().build();
         }
     }

@@ -7,7 +7,9 @@ import com.mvprojects.bankcore.repository.AccountRepository;
 import com.mvprojects.bankcore.service.AccountService;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Service
@@ -29,4 +31,17 @@ public class AccountServiceImpl implements AccountService {
         return accountRepository.findById(id)
                 .map(AccountMapper::maptoAccountDto);
     }
+
+    @Override
+    public AccountDto deposit(Long id, BigDecimal ammount) {
+        Optional<Account> account = accountRepository.findById(id);
+        if (account.isPresent()){
+            Account existingAccount = account.get();
+            BigDecimal newBalance = existingAccount.getBalance().add(ammount);
+            existingAccount.setBalance(newBalance);
+            Account savedAccount = accountRepository.save(existingAccount);
+            return AccountMapper.maptoAccountDto(savedAccount);
+        } else { throw new NoSuchElementException("Cuenta "+id+" no existe"); }
+    }
+
 }
