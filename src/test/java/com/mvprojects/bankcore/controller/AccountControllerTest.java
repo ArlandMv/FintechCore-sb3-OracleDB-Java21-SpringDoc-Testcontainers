@@ -103,4 +103,48 @@ class AccountControllerTest {
         assertNotNull(response);
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
+
+    @Test
+    @DisplayName("Given existing account with sufficient balance, when withdraw is requested, then return updated account")
+    void withdraw_ExistingAccountSufficientBalance_ReturnUpdatedAccount() {
+        // Given
+        Long accountId = 1L;
+        BigDecimal amount = BigDecimal.valueOf(500.0);
+        AccountDto updatedAccountDto = new AccountDto(accountId, "1234567890", BigDecimal.valueOf(500.0));
+        given(accountService.withdraw(accountId, amount)).willReturn(updatedAccountDto);
+
+        // When
+        ResponseEntity<?> response = accountController.withdraw(accountId, amount);
+
+        // Then
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(updatedAccountDto, response.getBody());
+    }
+
+    @Test
+    @DisplayName("Given existing account with insufficient balance, when withdraw is requested, then return bad request")
+    void withdraw_ExistingAccountInsufficientBalance_ReturnBadRequest() {
+        // Given
+        Long accountId = 1L;
+        BigDecimal amount = BigDecimal.valueOf(1500.0);
+        given(accountService.withdraw(accountId, amount)).willThrow(new IllegalArgumentException("Insufficient balance"));
+        // When
+        ResponseEntity<?> response = accountController.withdraw(accountId, amount);
+        // Then
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("Fondos Insuficientes", response.getBody());
+    }
+
+    @Test
+    @DisplayName("Given non-existing account, when withdraw is requested, then return not found")
+    void withdraw_NonExistingAccount_ReturnNotFound() {
+        // Given
+        Long accountId = 999L;
+        BigDecimal amount = BigDecimal.valueOf(500.0);
+        given(accountService.withdraw(accountId, amount)).willThrow(new NoSuchElementException("Cuenta " + accountId + " no existe"));
+        // When
+        ResponseEntity<?> response = accountController.withdraw(accountId, amount);
+        // Then
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
 }

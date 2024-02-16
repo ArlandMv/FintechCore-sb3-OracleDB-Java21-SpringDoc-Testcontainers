@@ -10,7 +10,9 @@ import java.util.Optional;
 public interface AccountService {
     AccountDto createAccount(AccountDto accountdto);
     Optional<AccountDto> getAccountById(Long id);
+
     AccountDto deposit(Long id, BigDecimal ammount);
+    AccountDto withdraw(Long id, BigDecimal ammount);
 
     //List<Product> getAllProducts();
     //Optional<Product> getProductById(Long id);

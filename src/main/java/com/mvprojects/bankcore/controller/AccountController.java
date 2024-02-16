@@ -2,13 +2,11 @@ package com.mvprojects.bankcore.controller;
 
 import com.mvprojects.bankcore.dto.AccountDto;
 import com.mvprojects.bankcore.service.AccountService;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -38,7 +36,7 @@ public class AccountController {
         }
     }
 
-    // Update Account REST API
+    // Update up Account REST API
     @PostMapping("/{id}/deposit")
     public ResponseEntity<AccountDto> deposit(@PathVariable Long id, @RequestBody BigDecimal amount) {
         try {
@@ -46,6 +44,19 @@ public class AccountController {
             return ResponseEntity.ok(updatedAccount);
         } catch (NoSuchElementException e) {
             return ResponseEntity.notFound().build();
+        }
+    }
+
+    // Update up Account REST API
+    @PostMapping("/{id}/withdraw")
+    public ResponseEntity<?> withdraw(@PathVariable Long id, @RequestBody BigDecimal amount) {
+        try {
+            AccountDto updatedAccount = accountService.withdraw(id, amount);
+            return ResponseEntity.ok(updatedAccount);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Fondos Insuficientes");
         }
     }
 }

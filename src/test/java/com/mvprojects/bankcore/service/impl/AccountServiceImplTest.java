@@ -37,9 +37,10 @@ class AccountServiceImplTest {
         mockAccountDTO = new AccountDto(null, "1234567890", BigDecimal.valueOf(1000.0));
     }
 
+    // missing testCreateAccount_ExistingAccount
     @Test
     @DisplayName("createAccount Success")
-    void givenNonExistingAccount_whenCreateAccount_thenAccountShouldBeReturned(){
+    void testCreateAccount_NewAccount(){
         // Arrange
         Account account = AccountMapper.mapToAccount(mockAccountDTO);
         given(accountRepository.save(any(Account.class))).willReturn(account);
@@ -113,4 +114,48 @@ class AccountServiceImplTest {
             accountService.deposit(nonExistingId, depositAmount);
         });
     }
+
+    @Test
+    @DisplayName("Withdraw with sufficient balance should Succeed")
+    void testWithdraw_ValidAccount_SufficientBalance() {
+        // Arrange
+        AccountDto accountDto = mockAccountDTO;
+        Long accountId = mockAccountDTO.getId();
+        BigDecimal initialBalance = mockAccountDTO.getBalance();
+        BigDecimal withdrawAmount = BigDecimal.valueOf(500.0);
+        Account account = AccountMapper.mapToAccount(mockAccountDTO);
+        given(accountRepository.findById(accountId)).willReturn(Optional.of(account));
+        given(accountRepository.save(any(Account.class))).willReturn(account);
+        // Act
+        AccountDto updatedAccountDto = accountService.withdraw(accountId, withdrawAmount);
+        // Assert
+        assertNotNull(updatedAccountDto);
+        assertEquals(accountId, updatedAccountDto.getId());
+        assertEquals(initialBalance.subtract(withdrawAmount), updatedAccountDto.getBalance());
+    }
+    @Test
+    @DisplayName("Withdraw with insufficient balance should Fail")
+    void testWithdraw_InsufficientBalance() {
+        // Arrange
+        Long accountId = 2L;
+        BigDecimal initialBalance = BigDecimal.valueOf(100.0);
+        BigDecimal withdrawalAmount = BigDecimal.valueOf(500.0);
+        Account account = new Account(accountId, "9876543210", initialBalance);
+        given(accountRepository.findById(accountId)).willReturn(Optional.of(account));
+        // Act and Assert
+        assertThrows(IllegalArgumentException.class, () -> accountService.withdraw(accountId, withdrawalAmount));
+    }
+    @Test
+    @DisplayName("Withdraw should Fail")
+    void testWithdraw_NonExistingAccount() {
+        // Arrange
+        Long nonExistingId = 999L;
+        BigDecimal depositAmount = BigDecimal.valueOf(500.0);
+        given(accountRepository.findById(nonExistingId)).willReturn(Optional.empty());
+        // Act and Assert
+        assertThrows(NoSuchElementException.class, () -> {
+            accountService.withdraw(nonExistingId, depositAmount);
+        });
+    }
+
 }

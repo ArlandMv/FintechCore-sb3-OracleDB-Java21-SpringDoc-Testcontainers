@@ -44,4 +44,22 @@ public class AccountServiceImpl implements AccountService {
         } else { throw new NoSuchElementException("Cuenta "+id+" no existe"); }
     }
 
+    @Override
+    public AccountDto withdraw(Long id, BigDecimal ammount) {
+        Optional<Account> accountOptional = accountRepository.findById(id);
+        if(accountOptional.isPresent()){
+            Account account = accountOptional.get();
+
+            if (ammount.compareTo(account.getBalance())>0){
+                throw new IllegalArgumentException("Fondos Insuficientes");
+            }
+            BigDecimal newBalance = account.getBalance().subtract(ammount);
+            account.setBalance(newBalance);
+            Account savedAccount = accountRepository.save(account);
+            return AccountMapper.maptoAccountDto(savedAccount);
+        } else {
+            throw new NoSuchElementException("Cuenta "+id+" no existe");
+        }
+    }
+
 }
